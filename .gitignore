@@ -1,3 +1,5 @@
+.DS_Store
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
@@ -9,6 +11,11 @@ _test
 bin/
 pkg/
 src/github.com/onsi/
+src/code.google.com/
+src/github.com/gocql/
+src/github.com/golang/
+src/speter.net/
+
 
 # Architecture specific extensions/prefixes
 *.[568vq]
