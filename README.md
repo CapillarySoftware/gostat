@@ -9,4 +9,7 @@ export GOPATH=$HOME/gostat
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega
+
 </code></pre>
