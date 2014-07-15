@@ -3,9 +3,11 @@ gostat
 
 A statistics collector / aggregator, written in go
 
-## install directions ##
+## Installation ##
 
-1. Install DataStax Community Edition of Apache Cassandra 2.0 via [these instructions](http://www.datastax.com/documentation/cassandra/2.0/cassandra/install/installTarball_t.html)
+### Cassandra ###
+
+1. Install the DataStax Community Edition of Apache Cassandra 2.0 via [these instructions](http://www.datastax.com/documentation/cassandra/2.0/cassandra/install/installTarball_t.html)
 
 2. Start Cassandra
 
@@ -13,7 +15,10 @@ A statistics collector / aggregator, written in go
 sudo nohup $HOME/cassandra-2.0.8/bin/cassandra
 
 </code></pre>
-2. Export environment variables
+
+### Environment Variables ###
+
+Export the following environment variables
 
 <pre><code>
 export GOPATH=$HOME/gostat
@@ -22,7 +27,9 @@ export PATH=$PATH:$GOBIN
 
 </code></pre>
 
-3. Install package dependencies
+### Dependencies ###
+
+Install the following package dependencies
 
 <pre><code>
 go get github.com/onsi/ginkgo/ginkgo
