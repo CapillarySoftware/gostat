@@ -17,7 +17,7 @@ func (a StatsAggregator) Aggregate(stats []stat.Stat) (average, min, max float64
 
 	for i := range stats {
 		v := stats[i].Value
-		
+
 		sum += v
 
 		if v < min {
