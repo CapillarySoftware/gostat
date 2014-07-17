@@ -15,6 +15,7 @@ var _ = Describe("StatsAggregator", func() {
 		sa = StatsAggregator{}
 	})
 
+
 	Describe("Aggregate", func() {
 
 		It("should return all 0 values if a nil slice is received", func() {
@@ -81,4 +82,62 @@ var _ = Describe("StatsAggregator", func() {
 		})
 	})
 
+
+	Describe("AppendStatsAggregate", func() {	
+		It("should return all 0 values if both parameters are zeroed-out StatsAggregates", func() {
+
+			appended := sa.AppendStatsAggregate(StatsAggregate{}, StatsAggregate{})
+			Expect(appended).To(Equal(StatsAggregate{Average: 0, Min: 0, Max: 0, Count: 0}))
+		})	
+
+		It("should return b if a's count is zero", func() {
+
+			a := StatsAggregate{}
+			b := StatsAggregate{Average: 3.5, Min: 1, Max: 6, Count: 6}
+			appended := sa.AppendStatsAggregate(a, b)
+			Expect(appended).To(Equal(b))
+		})
+
+		It("should return a if b's count is zero", func() {
+
+			a := StatsAggregate{Average: 3.5, Min: 1, Max: 6, Count: 6}
+			b := StatsAggregate{}
+			appended := sa.AppendStatsAggregate(a, b)
+			Expect(appended).To(Equal(a))
+		})
+
+		It("should compute a correct aggregate when both a and b have non-zero counts", func() {
+
+			a := sa.Aggregate([]stat.Stat{
+				{"foo", time.Now().UTC(), 1},
+				{"foo", time.Now().UTC(), 2},
+				{"foo", time.Now().UTC(), 3},
+				{"foo", time.Now().UTC(), 4},
+				{"foo", time.Now().UTC(), 5}})
+			Expect(a).To(Equal(StatsAggregate{Average: 3, Min: 1, Max: 5, Count: 5}))
+
+			b := sa.Aggregate([]stat.Stat{{"foo", time.Now().UTC(), 6}})
+			Expect(b).To(Equal(StatsAggregate{Average: 6, Min: 6, Max: 6, Count: 1}))
+
+			appended := sa.AppendStatsAggregate(a, b)
+			Expect(appended).To(Equal(StatsAggregate{Average: 3.5, Min: 1, Max: 6, Count: 6}))
+		})
+
+		It("should compute a correct aggregate for negative values", func() {
+
+			a := sa.Aggregate([]stat.Stat{
+				{"foo", time.Now().UTC(), -1},
+				{"foo", time.Now().UTC(), -2},
+				{"foo", time.Now().UTC(), -3},
+				{"foo", time.Now().UTC(), -4},
+				{"foo", time.Now().UTC(), -5}})
+			Expect(a).To(Equal(StatsAggregate{Average: -3, Min: -5, Max: -1, Count: 5}))
+
+			b := sa.Aggregate([]stat.Stat{{"foo", time.Now().UTC(), -6}})
+			Expect(b).To(Equal(StatsAggregate{Average: -6, Min: -6, Max: -6, Count: 1}))
+
+			appended := sa.AppendStatsAggregate(a, b)
+			Expect(appended).To(Equal(StatsAggregate{Average: -3.5, Min: -6, Max: -1, Count: 6}))
+		})
+	})
 })
