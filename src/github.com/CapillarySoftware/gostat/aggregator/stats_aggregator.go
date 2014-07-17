@@ -51,7 +51,7 @@ func (sa StatsAggregator) AppendStatsAggregate(a, b StatsAggregate) (aggregate S
 		return a
 	}
 
-	aggregate.Average = (a.Average * float64(a.Count) + b.Average) / float64(a.Count + b.Count)
+	aggregate.Average = ( (a.Average * float64(a.Count)) + (b.Average * float64(b.Count)) ) / float64(a.Count + b.Count)
 	aggregate.Min     = math.Min(a.Min, b.Min)
 	aggregate.Max     = math.Max(a.Max, b.Max)
 	aggregate.Count   = a.Count + b.Count

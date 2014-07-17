@@ -116,11 +116,13 @@ var _ = Describe("StatsAggregator", func() {
 				{"foo", time.Now().UTC(), 5}})
 			Expect(a).To(Equal(StatsAggregate{Average: 3, Min: 1, Max: 5, Count: 5}))
 
-			b := sa.Aggregate([]stat.Stat{{"foo", time.Now().UTC(), 6}})
-			Expect(b).To(Equal(StatsAggregate{Average: 6, Min: 6, Max: 6, Count: 1}))
+			b := sa.Aggregate([]stat.Stat{
+				{"foo", time.Now().UTC(), 5},
+				{"foo", time.Now().UTC(), 7}})
+			Expect(b).To(Equal(StatsAggregate{Average: 6, Min: 5, Max: 7, Count: 2}))
 
 			appended := sa.AppendStatsAggregate(a, b)
-			Expect(appended).To(Equal(StatsAggregate{Average: 3.5, Min: 1, Max: 6, Count: 6}))
+			Expect(appended).To(Equal(StatsAggregate{Average: 3.857142857142857, Min: 1, Max: 7, Count: 7}))
 		})
 
 		It("should compute a correct aggregate for negative values", func() {
