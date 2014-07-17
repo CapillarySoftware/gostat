@@ -29,6 +29,15 @@ var _ = Describe("StatsAggregator", func() {
 			Expect(max).To(Equal(0.0))
 		})
 
+		It("Should return all the same values if the slice contains just one Stat", func() {
+			stats := []stat.Stat{"foo", now(), 123.456}
+
+			average, min, max := sa.Aggregate([]stat.Stat{})
+			Expect(average).To(Equal(0.0))
+			Expect(min).To(Equal(0.0))
+			Expect(max).To(Equal(0.0))
+		})
+
 	})
 
 })
