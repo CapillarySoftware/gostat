@@ -14,7 +14,6 @@ func Aggregate(stats []stat.Stat) (aggregate StatsAggregate) {
 	}
 
 	aggregate = StatsAggregate{Min : stats[0].Value, Max : stats[0].Value, Count : len(stats)}
-	
 	sum := 0.0
 	for i := range stats {
 		v := stats[i].Value
@@ -39,7 +38,6 @@ func Aggregate(stats []stat.Stat) (aggregate StatsAggregate) {
 // safely computing new values in the process. This function enables aggregates
 // to be combined without re-computing all the original values
 func AppendStatsAggregate(a, b StatsAggregate) (aggregate StatsAggregate) {
-
 	if (a.Count == 0) {
 		return b
 	}

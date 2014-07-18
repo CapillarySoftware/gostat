@@ -10,7 +10,6 @@ import (
 var _ = Describe("Aggregator", func() {
 
 	Describe("Aggregate", func() {
-
 		It("should return all 0 values if a nil slice is received", func() {
 			a := Aggregate(nil)
 			Expect(a).To(Equal(StatsAggregate{Average: 0, Min: 0, Max: 0, Count: 0}))
