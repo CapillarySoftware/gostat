@@ -15,12 +15,11 @@ type StatBucketer struct {
 
 func NewStatBucketer() *StatBucketer {
 	now := time.Now().UTC()
-	now = now.Add(time.Duration(int64(now.Second())) * -1) // round down to the current minute
 
 	return &StatBucketer {
-	    CurrentBucketMinTime  : now,
-	    CurrentBuckets        : make(map[string][]stat.Stat),
-	    PerviousBucketMinTime : now.Add(time.Minute * -1),
-	    PreviousBuckets       : make(map[string][]stat.Stat),
+		CurrentBucketMinTime  : now,
+		CurrentBuckets        : make(map[string][]stat.Stat),
+		PerviousBucketMinTime : now.Add(time.Minute * -1),
+		PreviousBuckets       : make(map[string][]stat.Stat),
 	}
 }
