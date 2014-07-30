@@ -8,18 +8,18 @@ import (
 type StatBucketer struct {
 	CurrentBucketMinTime  time.Time
 	CurrentBuckets        map[string][]stat.Stat
-	
+		
 	PerviousBucketMinTime time.Time
 	PreviousBuckets       map[string][]stat.Stat
 }
 
 func NewStatBucketer() *StatBucketer {
-	now := time.Now().UTC()
+	startOfCurrentMin := time.Now().UTC().Truncate(time.Minute) // "now", rounded down to the current min
 
 	return &StatBucketer {
-		CurrentBucketMinTime  : now,
+		CurrentBucketMinTime  : startOfCurrentMin,
 		CurrentBuckets        : make(map[string][]stat.Stat),
-		PerviousBucketMinTime : now.Add(time.Minute * -1),
+		PerviousBucketMinTime : startOfCurrentMin.Add(time.Minute * -1), // one minute behind
 		PreviousBuckets       : make(map[string][]stat.Stat),
 	}
 }
