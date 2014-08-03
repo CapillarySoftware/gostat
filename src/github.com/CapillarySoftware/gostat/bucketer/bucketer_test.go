@@ -35,6 +35,10 @@ var _ = Describe("Bucketer", func() {
 
 			// the previous bucket's min time is exactly one minute less than the current bucket's min time
 			Expect(x.currentBucketMinTime.Sub(x.previousBucketMinTime)).To(Equal(time.Duration(time.Minute)))
+
+			// verify the input channels
+			Expect(x.input).NotTo(BeClosed())
+			Expect(x.shutdown).NotTo(BeClosed())
 		})
 	})
 
