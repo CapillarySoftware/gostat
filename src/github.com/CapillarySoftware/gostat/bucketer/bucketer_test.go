@@ -123,5 +123,21 @@ var _ = Describe("Bucketer", func() {
 			Expect(x.currentBuckets[s.Name]).To(BeNil())
 			Expect(x.previousBuckets[s.Name]).To(BeNil())
 		})
+
+		It("should insert the same stat in the current bucket TWICE we call insert() on the same stat twice and the Timestamp is after the current bucket's min time", func() {
+			x := NewBucketer(stats, bucketedStats, shutdown)
+
+			s := stat.Stat{Name : "foo", Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second)), Value : 1}
+			Expect(s.Timestamp).To(BeTemporally(">", x.currentBucketMinTime))
+			Expect(s.Timestamp).To(BeTemporally(">", x.previousBucketMinTime))
+			Expect(x.currentBuckets[s.Name]).To(BeNil())
+			Expect(x.previousBuckets[s.Name]).To(BeNil())
+			
+			Expect(x.insert(&s)).To(BeNil())
+			Expect(x.insert(&s)).To(BeNil())
+			
+			Expect(x.currentBuckets[s.Name]).To(ConsistOf(&s, &s))
+			Expect(x.previousBuckets[s.Name]).To(BeNil())
+		})
 	})	
 })
