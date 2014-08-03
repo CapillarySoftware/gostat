@@ -36,7 +36,7 @@ func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- []*stat.Stat, shu
 
 // BucketStat places the provided stat in the appropriate bucket
 // It returns an error if the stat could not be placed in a bucket
-func (b Bucketer) insert(s *stat.Stat) error {
+func (b *Bucketer) insert(s *stat.Stat) error {
 	var buckets map[string][]*stat.Stat
 
 	if s == nil {
@@ -55,4 +55,14 @@ func (b Bucketer) insert(s *stat.Stat) error {
 	stats = append(stats, s)
 	buckets[s.Name] = stats
 	return nil
+}
+
+// next advances to the next interval, updating the current/previous buckets and
+// their associated times
+func (b *Bucketer) next() {
+	b.previousBucketMinTime = b.currentBucketMinTime
+	b.currentBucketMinTime = b.currentBucketMinTime.Add(time.Duration(time.Minute))
+
+	b.previousBuckets = b.currentBuckets
+	b.currentBuckets = make(map[string][]*stat.Stat)
 }
