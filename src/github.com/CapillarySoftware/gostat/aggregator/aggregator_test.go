@@ -30,12 +30,12 @@ var _ = Describe("Aggregator", func() {
 
 		It("should return the expected values for a collection of more than one Stat", func() {
 			stats := []*stat.Stat{
-				&{"foo", time.Now().UTC(), 1},
-				&{"foo", time.Now().UTC(), 2},
-				&{"foo", time.Now().UTC(), 3},
-				&{"foo", time.Now().UTC(), 4},
-				&{"foo", time.Now().UTC(), 5},
-				&{"foo", time.Now().UTC(), 6}}
+				{"foo", time.Now().UTC(), 1},
+				{"foo", time.Now().UTC(), 2},
+				{"foo", time.Now().UTC(), 3},
+				{"foo", time.Now().UTC(), 4},
+				{"foo", time.Now().UTC(), 5},
+				{"foo", time.Now().UTC(), 6}}
 
 			a := Aggregate(stats)
 			Expect(a).To(Equal(StatsAggregate{Average: 3.5, Min: 1, Max: 6, Count: 6}))
