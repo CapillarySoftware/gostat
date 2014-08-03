@@ -21,7 +21,7 @@ var _ = Describe("Bucketer", func() {
 	})
 
 
-	Describe("NewBucketer construction", func() {
+	Describe("construction", func() {
 		It("should return a properly initialized Bucketer", func() {
 			x := NewBucketer(stats, bucketedStats, shutdown)
 

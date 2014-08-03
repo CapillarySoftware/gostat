@@ -18,7 +18,7 @@ type Bucketer struct {
 	shutdown              <-chan bool
 }
 
-//cs chan string
+// NewBucketer constructs a Bucketer
 func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- []*stat.Stat, shutdown <-chan bool) *Bucketer {
 	startOfCurrentMin := time.Now().UTC().Truncate(time.Minute) // "now", rounded down to the current min
 
@@ -34,7 +34,7 @@ func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- []*stat.Stat, shu
 	}
 }
 
-// BucketStat places the provided stat in the appropriate bucket
+// insert places the provided stat in the appropriate current or previous bucket.
 // It returns an error if the stat could not be placed in a bucket
 func (b *Bucketer) insert(s *stat.Stat) error {
 	var buckets map[string][]*stat.Stat
@@ -43,7 +43,7 @@ func (b *Bucketer) insert(s *stat.Stat) error {
 		return fmt.Errorf("dropping nil stat")
 	}
 
-	if s.Timestamp.After(b.currentBucketMinTime) ||  s.Timestamp.Equal(b.currentBucketMinTime) {
+	if s.Timestamp.After(b.currentBucketMinTime)         ||  s.Timestamp.Equal(b.currentBucketMinTime) {
 		buckets = b.currentBuckets
 	} else if s.Timestamp.After(b.previousBucketMinTime) || s.Timestamp.Equal(b.previousBucketMinTime) {
 		buckets = b.previousBuckets
@@ -61,8 +61,8 @@ func (b *Bucketer) insert(s *stat.Stat) error {
 // their associated times
 func (b *Bucketer) next() {
 	b.previousBucketMinTime = b.currentBucketMinTime
-	b.currentBucketMinTime = b.currentBucketMinTime.Add(time.Duration(time.Minute))
+	b.currentBucketMinTime  = b.currentBucketMinTime.Add(time.Duration(time.Minute))
 
 	b.previousBuckets = b.currentBuckets
-	b.currentBuckets = make(map[string][]*stat.Stat)
+	b.currentBuckets  = make(map[string][]*stat.Stat)
 }
