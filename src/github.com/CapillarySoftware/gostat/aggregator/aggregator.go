@@ -8,7 +8,7 @@ import (
 
 // Aggregate aggregates a collection of statistics, returning the average, min and max.
 // Aggregate only examines the 'Value' property of a stat, and ignores all other properties (i.e. Name)
-func Aggregate(stats []stat.Stat) (aggregate StatsAggregate) {
+func Aggregate(stats []*stat.Stat) (aggregate StatsAggregate) {
 	if stats == nil || len(stats) == 0 {
 		return StatsAggregate{}
 	}
