@@ -16,20 +16,20 @@ var _ = Describe("Aggregator", func() {
 		})
 
 		It("should return all 0 values if an empty slice is received", func() {
-			a := Aggregate([]stat.Stat{})
+			a := Aggregate([]*stat.Stat{})
 			Expect(a).To(Equal(StatsAggregate{Average: 0, Min: 0, Max: 0, Count: 0}))
 		})
 
 		It("should return all the same values if the slice contains just one Stat", func() {
 			const value = 123.456
-			stats := []stat.Stat{{"foo", time.Now().UTC(), value}}
+			stats := []*stat.Stat{{"foo", time.Now().UTC(), value}}
 
 			a := Aggregate(stats)
 			Expect(a).To(Equal(StatsAggregate{Average: value, Min: value, Max: value, Count: 1}))
 		})
 
 		It("should return the expected values for a collection of more than one Stat", func() {
-			stats := []stat.Stat{
+			stats := []*stat.Stat{
 				{"foo", time.Now().UTC(), 1},
 				{"foo", time.Now().UTC(), 2},
 				{"foo", time.Now().UTC(), 3},
@@ -42,7 +42,7 @@ var _ = Describe("Aggregator", func() {
 		})
 
 		It("should ignore stat names", func() {
-			stats := []stat.Stat{
+			stats := []*stat.Stat{
 				{"each",   time.Now().UTC(), 6},
 				{"stat",   time.Now().UTC(), 5},
 				{"name",   time.Now().UTC(), 4},
@@ -55,7 +55,7 @@ var _ = Describe("Aggregator", func() {
 		})
 
 		It("should correctly handle negative values", func() {
-			stats := []stat.Stat{
+			stats := []*stat.Stat{
 				{"foo", time.Now().UTC(), -1},
 				{"foo", time.Now().UTC(), -2},
 				{"foo", time.Now().UTC(), -3},
@@ -90,7 +90,7 @@ var _ = Describe("Aggregator", func() {
 		})
 
 		It("should compute a correct aggregate when both a and b have non-zero counts", func() {
-			a := Aggregate([]stat.Stat{
+			a := Aggregate([]*stat.Stat{
 				{"foo", time.Now().UTC(), 1},
 				{"foo", time.Now().UTC(), 2},
 				{"foo", time.Now().UTC(), 3},
@@ -98,7 +98,7 @@ var _ = Describe("Aggregator", func() {
 				{"foo", time.Now().UTC(), 5}})
 			Expect(a).To(Equal(StatsAggregate{Average: 3, Min: 1, Max: 5, Count: 5}))
 
-			b := Aggregate([]stat.Stat{
+			b := Aggregate([]*stat.Stat{
 				{"foo", time.Now().UTC(), 5},
 				{"foo", time.Now().UTC(), 7}})
 			Expect(b).To(Equal(StatsAggregate{Average: 6, Min: 5, Max: 7, Count: 2}))
@@ -108,7 +108,7 @@ var _ = Describe("Aggregator", func() {
 		})
 
 		It("should compute a correct aggregate for negative values", func() {
-			a := Aggregate([]stat.Stat{
+			a := Aggregate([]*stat.Stat{
 				{"foo", time.Now().UTC(), -1},
 				{"foo", time.Now().UTC(), -2},
 				{"foo", time.Now().UTC(), -3},
@@ -116,7 +116,7 @@ var _ = Describe("Aggregator", func() {
 				{"foo", time.Now().UTC(), -5}})
 			Expect(a).To(Equal(StatsAggregate{Average: -3, Min: -5, Max: -1, Count: 5}))
 
-			b := Aggregate([]stat.Stat{{"foo", time.Now().UTC(), -6}})
+			b := Aggregate([]*stat.Stat{{"foo", time.Now().UTC(), -6}})
 			Expect(b).To(Equal(StatsAggregate{Average: -6, Min: -6, Max: -6, Count: 1}))
 
 			appended := AppendStatsAggregate(a, b)
