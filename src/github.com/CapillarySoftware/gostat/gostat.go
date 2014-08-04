@@ -45,12 +45,12 @@ func installCtrlCHandler(shutdown ...chan<- bool) {
 
 	go func() {                                                        
 	  for sig := range c {                                             
-	    fmt.Printf(" captured %v, stopping stats collection and exiting...\n", sig)
+	    log.Infof(" captured %v, stopping stats collection and exiting...\n", sig)
 	    for _, s := range shutdown {
 	    	s <-true
 	    }
 	    <-time.After(time.Second * 5) // wait for a clean shutdown, TODO: wait on signal from all routines
-	    fmt.Println("Done")                                      
+	    log.Info("Done")                                      
 	    os.Exit(1)                                                     
 	  }                                                                
 	}()
@@ -94,7 +94,7 @@ func bindSocketListener(stats chan<- *stat.Stat, shutdown <-chan bool) {
 		}
 	}
 
-	fmt.Println("Exiting socket listener")
+	log.Info("Exiting socket listener")
 }
 
 

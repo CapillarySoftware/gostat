@@ -3,7 +3,7 @@ package bucketer
 import (
 	"github.com/CapillarySoftware/gostat/stat"
 	"time"
-	"fmt"
+	log "github.com/cihub/seelog"
 )
 
 type Bucketer struct {
@@ -40,14 +40,14 @@ func (b *Bucketer) Run() {
 
 	for !done {
 		select {
-		case stat := <-b.input : fmt.Printf("Bucketer got %+v\n", *stat)
+		case stat := <-b.input : log.Debugf("Bucketer got %+v", *stat)
 		                         b.insert(stat)
 		case done =  <-b.shutdown : break
-		case         <-time.After(time.Second * 1) : fmt.Println("Bucketer Run() timeout ", time.Now())
+		case         <-time.After(time.Second * 1) : log.Debug("Bucketer Run() timeout ", time.Now())
 		}
 	}
 
-	fmt.Println("Bucketer Run() exiting ", time.Now())
+	log.Info("Bucketer Run() exiting ", time.Now())
 }
 
 
@@ -57,7 +57,7 @@ func (b *Bucketer) insert(s *stat.Stat) error {
 	var buckets map[string][]*stat.Stat
 
 	if s == nil {
-		return fmt.Errorf("dropping nil stat")
+		return log.Errorf("dropping nil stat")
 	}
 
 	if s.Timestamp.After(b.currentBucketMinTime)         ||  s.Timestamp.Equal(b.currentBucketMinTime) {
@@ -65,7 +65,7 @@ func (b *Bucketer) insert(s *stat.Stat) error {
 	} else if s.Timestamp.After(b.previousBucketMinTime) || s.Timestamp.Equal(b.previousBucketMinTime) {
 		buckets = b.previousBuckets
 	} else {
-		return fmt.Errorf("Bucketer: dropping stat older than %v: %+v", b.previousBucketMinTime, *s)
+		return log.Warnf("Bucketer: dropping stat older than %v: %+v", b.previousBucketMinTime, *s)
 	}
 
 	stats := buckets[s.Name]
