@@ -17,7 +17,7 @@ func main () {
 
   installCtrlCHandler(&shutdownBucketer)
 
-  // create and start a Bucketer
+	// create and start a Bucketer
 	b := bucketer.NewBucketer(stats, bucketedStats, shutdownBucketer)
 	go b.Run()
 
@@ -25,7 +25,7 @@ func main () {
 	for true {
 		<-time.After(time.Second * time.Duration(rand.Intn(3))) // sleep 0-3 seconds
 
-    // create a state named "stat[1-10]" with a random value between 1-100
+		// create a state named "stat[1-10]" with a random value between 1-100
 		stat := stat.Stat{Name : fmt.Sprintf("stat%v", (rand.Intn(9)+1)), Timestamp : time.Now().UTC(), Value : float64(rand.Intn(99)+1)}
 		stats <- &stat // send it to the Bucketer
 	}
@@ -36,7 +36,7 @@ func main () {
 func installCtrlCHandler(shutdownBucketer *chan bool) {
 	c := make(chan os.Signal, 1)                                       
 	signal.Notify(c, os.Interrupt)                                     
-	
+
 	go func() {                                                        
 	  for sig := range c {                                             
 	    fmt.Printf(" captured %v, stopping stats collection and exiting...\n", sig)
