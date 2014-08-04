@@ -13,9 +13,9 @@ type Bucketer struct {
 	previousBucketMinTime time.Time
 	previousBuckets       map[string][]*stat.Stat
 
-	input                 <-chan *stat.Stat
-	output                chan<- []*stat.Stat
-	shutdown              <-chan bool
+	input                 <-chan *stat.Stat   // Stats to be bucketed are read from this channel
+	output                chan<- []*stat.Stat // 'buckets' of Stats are written to this channel
+	shutdown              <-chan bool         // signals a graceful shutdown
 }
 
 // NewBucketer constructs a Bucketer
@@ -33,6 +33,23 @@ func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- []*stat.Stat, shu
 		shutdown              : shutdown,
 	}
 }
+
+
+func (b *Bucketer) Run() {
+	done := false
+
+	for !done {
+		select {
+		case stat := <-b.input : fmt.Printf("Bucketer got %+v\n", *stat)
+		                         b.insert(stat)
+		case done =  <-b.shutdown : break
+		case         <-time.After(time.Second * 1) : fmt.Println("Bucketer Run() timeout ", time.Now())
+		}
+	}
+
+	fmt.Println("Bucketer Run() exiting ", time.Now())
+}
+
 
 // insert places the provided stat in the appropriate current or previous bucket.
 // It returns an error if the stat could not be placed in a bucket
