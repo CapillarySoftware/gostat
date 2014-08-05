@@ -29,11 +29,36 @@ export PATH=$PATH:$GOBIN
 
 ### Dependencies ###
 
+Install Nanomsg (OS X)
+
+<pre><code>
+brew install nanomsg
+
+</code></pre>
+
+Install Protocol Buffers (OS X)
+
+<pre><code>
+brew install protobuf
+
+</code></pre>
+
+
 Install the following package dependencies
 
 <pre><code>
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 go get github.com/gocql/gocql
+go get github.com/op/go-nanomsg
+go get github.com/cihub/seelog
 
+</code></pre>
+
+
+Rebuild gogoprotobuffer messages
+
+<pre><code>
+go get -u code.google.com/p/gogoprotobuf/{proto,protoc-gen-gogo,gogoproto}
+protoc --gogo_out=. -I=.:code.google.com/p/gogoprotobuf/protobuf -I=$GOPATH/src/ -I=$GOPATH/src/code.google.com/p/gogoprotobuf/protobuf *.proto
 </code></pre>
