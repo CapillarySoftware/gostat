@@ -306,5 +306,30 @@ var _ = Describe("Bucketer", func() {
 			Expect(x.previousBuckets[STAT_NAME]).To(BeNil())
 			Expect(x.futureBuckets[STAT_NAME]).To(BeNil())
 		})
+	})
+
+
+	Describe("publish", func() {
+		It("should return a properly initialized Bucketer", func() {
+			x := NewBucketer(stats, bucketedStats, shutdown)
+
+			// a newly constructed Bucketer has nothing in it's buckets
+			Expect(len(x.currentBuckets)).To(Equal(0))
+			Expect(len(x.previousBuckets)).To(Equal(0))
+			Expect(len(x.futureBuckets)).To(Equal(0))
+
+			// the current bucket min time is rounded down to the minute boundary
+			// so it should not have any 'seconds' or 'nanoseconds' part
+			Expect(x.currentBucketMinTime.Second()).To(Equal(0))
+			Expect(x.currentBucketMinTime.Nanosecond()).To(Equal(0))
+
+			// the previous bucket's min time is exactly one minute less than the current bucket's min time, and the future bucket is one min ahead
+			Expect(x.currentBucketMinTime.Sub(x.previousBucketMinTime)).To(Equal(time.Duration(time.Minute)))
+			Expect(x.futureBucketMinTime.Sub(x.currentBucketMinTime)).To(Equal(time.Duration(time.Minute)))
+
+			// verify the input channels
+			Expect(x.input).NotTo(BeClosed())
+			Expect(x.shutdown).NotTo(BeClosed())
+		})
 	})	
 })

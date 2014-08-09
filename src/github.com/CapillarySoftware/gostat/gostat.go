@@ -12,17 +12,29 @@ import (
 	log  "github.com/cihub/seelog"
 )
 
-func main () {
-	stats            := make(chan *stat.Stat)   // stats received from producers
-	bucketedStats    := make(chan []*stat.Stat) // raw bucketed (non-aggregated) stats are output here
-	shutdownBucketer := make(chan bool)         // used to signal to the bucketer we are done
-	shutdownListener := make(chan bool)         // used to signal to the socket listener we are done
+func main() {
+	stats              := make(chan *stat.Stat)    // stats received from producers
+	bucketedStats      := make(chan *[]*stat.Stat) // raw bucketed (non-aggregated) stats are output here
+	shutdownBucketer   := make(chan bool)          // used to signal the bucketer we are done
+	shutdownListener   := make(chan bool)          // used to signal the socket listener we are done
+	shutdownAggregator := make(chan bool)          // used to signal the aggregator we are done
 
-  installCtrlCHandler(shutdownBucketer, shutdownListener)
+  installCtrlCHandler(shutdownBucketer, shutdownListener, shutdownAggregator)
 
 	// create and start a Bucketer
 	b := bucketer.NewBucketer(stats, bucketedStats, shutdownBucketer)
-	go b.Run()
+	go b.Run(time.Second * 5) // publish stats ~ every 15 seconds
+
+	// TODO: replace this simulation of an Aggregator with a real one
+	go func(bucketed <-chan *[]*stat.Stat, shutdown <-chan bool) {
+		for {
+			select {
+				case <-bucketed : log.Debugf("aggregator simulation got stats bucket with length %d", len(bucketed))
+				case <-shutdown : log.Info("aggregator simulation shutting down")
+				                  break
+			}
+	}
+	}(bucketedStats, shutdownAggregator)
 
 	// start a socket listener
 	go bindSocketListener(stats, shutdownListener)
@@ -31,7 +43,7 @@ func main () {
 	for true {
 		<-time.After(time.Second * time.Duration(rand.Intn(3))) // sleep 0-3 seconds
 
-		// create a state named "stat[1-10]" with a random value between 1-100
+		// create a stat randomly named "stat1 ... stat10" with a random value between 1-100
 		stat := stat.Stat{Name : fmt.Sprintf("stat%v", (rand.Intn(9)+1)), Timestamp : time.Now().UTC(), Value : float64(rand.Intn(99)+1)}
 		stats <- &stat // send it to the Bucketer
 	}
