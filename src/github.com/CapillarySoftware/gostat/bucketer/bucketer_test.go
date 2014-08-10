@@ -413,11 +413,11 @@ var _ = Describe("Bucketer", func() {
 
 			x.pub()
 			x.next()
-			x.pub()
 			// verify the stats went to the appropriate buckets
 			Expect(x.currentBuckets[STAT_NAME]).To(BeNil())
 			Expect(x.previousBuckets[STAT_NAME]).To(ConsistOf(&s1, &s2))
 			Expect(x.futureBuckets[STAT_NAME]).To(BeNil())
+			x.pub()
 		})
 	})	
 })
