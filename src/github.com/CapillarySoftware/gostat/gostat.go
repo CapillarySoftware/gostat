@@ -13,11 +13,11 @@ import (
 )
 
 func main() {
-	stats              := make(chan *stat.Stat)    // stats received from producers
-	bucketedStats      := make(chan *[]*stat.Stat) // raw bucketed (non-aggregated) stats are output here
-	shutdownBucketer   := make(chan bool)          // used to signal the bucketer we are done
-	shutdownListener   := make(chan bool)          // used to signal the socket listener we are done
-	shutdownAggregator := make(chan bool)          // used to signal the aggregator we are done
+	stats              := make(chan *stat.Stat)   // stats received from producers
+	bucketedStats      := make(chan []*stat.Stat) // raw bucketed (non-aggregated) stats are output here
+	shutdownBucketer   := make(chan bool)         // used to signal the bucketer we are done
+	shutdownListener   := make(chan bool)         // used to signal the socket listener we are done
+	shutdownAggregator := make(chan bool)         // used to signal the aggregator we are done
 
   installCtrlCHandler(shutdownBucketer, shutdownListener, shutdownAggregator)
 
@@ -26,10 +26,13 @@ func main() {
 	go b.Run(time.Second * 5) // publish stats ~ every 15 seconds
 
 	// TODO: replace this simulation of an Aggregator with a real one
-	go func(bucketed <-chan *[]*stat.Stat, shutdown <-chan bool) {
+	go func(bucketed <-chan []*stat.Stat, shutdown <-chan bool) {
 		for {
 			select {
-				case <-bucketed : log.Debugf("aggregator simulation got stats bucket with length %d", len(bucketed))
+				case bucket := <-bucketed : log.Debugf("aggregator simulation got stats bucket with length %d", len(bucket))
+																		for _, stat := range bucket {
+																			log.Debugf("aggregator sim: %#v", stat)
+																		}
 				case <-shutdown : log.Info("aggregator simulation shutting down")
 				                  break
 			}

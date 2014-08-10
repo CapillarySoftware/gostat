@@ -4,7 +4,6 @@ import (
 	"github.com/CapillarySoftware/gostat/stat"
 	"time"
 	log "github.com/cihub/seelog"
-	"reflect"
 )
 
 const NaonsecondsPerMin time.Duration = 60000000000
@@ -21,12 +20,12 @@ type Bucketer struct {
 	futureBuckets         bucketMap
 
 	input                 <-chan *stat.Stat   // Stats to be bucketed are read from this channel
-	output                chan<- *[]*stat.Stat // 'buckets' of Stats are written to this channel
+	output                chan<- []*stat.Stat // 'buckets' of Stats are written to this channel
 	shutdown              <-chan bool         // signals a graceful shutdown
 }
 
 // NewBucketer constructs a Bucketer
-func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- *[]*stat.Stat, shutdown <-chan bool) *Bucketer {
+func NewBucketer(stats <-chan *stat.Stat, bucketedStats chan<- []*stat.Stat, shutdown <-chan bool) *Bucketer {
 	startOfCurrentMin := time.Now().UTC().Truncate(time.Minute) // "now", rounded down to the current min
 
 	return &Bucketer {
@@ -84,19 +83,13 @@ func (b *Bucketer) pub() {
 // Bucketer's output channel
 func (b *Bucketer) publish(buckets bucketMap) {
 	for statName, bucket := range buckets {
-		log.Debugf("publishing %d stats for bucket: %v type:%s", len(bucket), statName, reflect.TypeOf(bucket))
-
-		for stat := range bucket {
-			log.Debugf("Copying %+v", stat)
-		}
+		log.Debugf("publishing %d stats for bucket: %v", len(bucket), statName)
 
 		clone := make([]*stat.Stat, len(bucket))
-		/*
-		for s := range bucket {
-			clone = append(clone, s)
+		for i := range bucket {
+			clone[i] = bucket[i]
 		}
-		*/
-		b.output <- &clone
+		b.output <- clone
 	}
 }
 
