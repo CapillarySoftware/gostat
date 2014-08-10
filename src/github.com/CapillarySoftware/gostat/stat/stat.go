@@ -1,4 +1,4 @@
-	// Package stat represents containers for statistics
+// Package stat represents containers for statistics
 package stat
 
 import "time"
