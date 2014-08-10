@@ -335,7 +335,7 @@ var _ = Describe("Bucketer", func() {
 
 
 	Describe("pub", func() {
-		It("should publish the expected current and future stats", func(done Done) {
+		It("should publish the expected current and previous stats", func(done Done) {
 			const STAT_NAME = "foo"
 			output := make(chan []*stat.Stat)
 			x := NewBucketer(stats, output, shutdown)
@@ -370,6 +370,54 @@ var _ = Describe("Bucketer", func() {
 			}(output)
 
 			x.pub()
+		})
+
+		It("should publish the expected current and previous stats before and after next() is invoked", func(done Done) {
+			const STAT_NAME = "foo"
+			output := make(chan []*stat.Stat)
+			x := NewBucketer(stats, output, shutdown)
+
+			// insert two "current" stats
+			s1 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second)),   Value : 1}
+			s2 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second*2)), Value : 2}
+			x.insert(&s1)
+			x.insert(&s2)
+			
+			// insert two previous stats
+			s3 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second * -2)), Value : 3}
+			s4 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second * -1)), Value : 4}
+			x.insert(&s3)
+			x.insert(&s4)
+			
+			// verify the stats went to the appropriate buckets
+			Expect(x.currentBuckets[STAT_NAME]).To(ConsistOf(&s1, &s2))
+			Expect(x.previousBuckets[STAT_NAME]).To(ConsistOf(&s3, &s4))
+			Expect(x.futureBuckets[STAT_NAME]).To(BeNil())
+
+			// start a goroutine to consume and verify the output
+			go func(bucketed chan []*stat.Stat) {
+				// the "current" bucket is published/received first
+				bucket := <-bucketed
+				Expect(bucket).To(ConsistOf(&s1, &s2))
+				
+				// the "previous" bucket is published/received second
+				bucket = <-bucketed
+				Expect(bucket).To(ConsistOf(&s3, &s4))
+
+				// after next() was invoked, there were no new "current" buckets to publish, however
+				// the "previous" bucket is published/received, because it had data
+				bucket = <-bucketed
+				Expect(bucket).To(ConsistOf(&s1, &s2))
+				close(done)
+			}(output)
+
+			x.pub()
+			x.next()
+			x.pub()
+			// verify the stats went to the appropriate buckets
+			Expect(x.currentBuckets[STAT_NAME]).To(BeNil())
+			Expect(x.previousBuckets[STAT_NAME]).To(ConsistOf(&s1, &s2))
+			Expect(x.futureBuckets[STAT_NAME]).To(BeNil())
 		})
 	})	
 })

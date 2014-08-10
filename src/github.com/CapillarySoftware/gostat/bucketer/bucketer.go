@@ -65,6 +65,11 @@ func (b *Bucketer) Run(publishInterval time.Duration) {
 		                                   b.pub()
 		case         <-time.After(time.Second * 1) : log.Debug("Bucketer Run() timeout ", time.Now())
 		}
+
+		if time.Now().UTC().After(b.futureBucketMinTime) {
+			log.Debug("Bucketer advancing ", time.Now())
+			b.next()
+		}
 	}
 
 	log.Info("Bucketer Run() exiting ", time.Now())

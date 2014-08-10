@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/CapillarySoftware/gostat/stat"
 	"github.com/CapillarySoftware/gostat/bucketer"
+	"github.com/CapillarySoftware/gostat/aggregator"
 	"fmt"
 	"time"
 	"os"
@@ -33,6 +34,8 @@ func main() {
 																		for _, stat := range bucket {
 																			log.Debugf("aggregator sim: %#v", stat)
 																		}
+																		a := aggregator.Aggregate(bucket)
+																		log.Debugf("aggregator sim aggregate: %#v", a)
 				case <-shutdown : log.Info("aggregator simulation shutting down")
 				                  break
 			}
