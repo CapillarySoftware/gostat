@@ -24,7 +24,7 @@ func main() {
 
 	// create and start a Bucketer
 	b := bucketer.NewBucketer(stats, bucketedStats, shutdownBucketer)
-	go b.Run(time.Second * 5) // publish stats ~ every 15 seconds
+	go b.Run(time.Second * 5)
 
 	// TODO: replace this simulation of an Aggregator with a real one
 	go func(bucketed <-chan []*stat.Stat, shutdown <-chan bool) {
