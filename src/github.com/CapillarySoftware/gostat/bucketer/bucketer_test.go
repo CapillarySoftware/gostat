@@ -310,26 +310,66 @@ var _ = Describe("Bucketer", func() {
 
 
 	Describe("publish", func() {
-		It("should return a properly initialized Bucketer", func() {
-			x := NewBucketer(stats, bucketedStats, shutdown)
+		It("should publish the expected stats", func(done Done) {
+			const STAT_NAME = "foo"
+			output := make(chan []*stat.Stat)
+			x := NewBucketer(stats, output, shutdown)
 
-			// a newly constructed Bucketer has nothing in it's buckets
-			Expect(len(x.currentBuckets)).To(Equal(0))
-			Expect(len(x.previousBuckets)).To(Equal(0))
-			Expect(len(x.futureBuckets)).To(Equal(0))
+			// insert two "current" stats
+			s1 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second)),   Value : 1}
+			s2 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second*2)), Value : 2}
+			x.insert(&s1)
+			x.insert(&s2)
+			Expect(x.currentBuckets[STAT_NAME]).To(ConsistOf(&s1, &s2))
 
-			// the current bucket min time is rounded down to the minute boundary
-			// so it should not have any 'seconds' or 'nanoseconds' part
-			Expect(x.currentBucketMinTime.Second()).To(Equal(0))
-			Expect(x.currentBucketMinTime.Nanosecond()).To(Equal(0))
+			// start a goroutine to consume and verify the output
+			go func(bucketed chan []*stat.Stat) {
+				bucket := <-bucketed
+				Expect(bucket).To(ConsistOf(&s1, &s2))
+				close(done)
+			}(output)
 
-			// the previous bucket's min time is exactly one minute less than the current bucket's min time, and the future bucket is one min ahead
-			Expect(x.currentBucketMinTime.Sub(x.previousBucketMinTime)).To(Equal(time.Duration(time.Minute)))
-			Expect(x.futureBucketMinTime.Sub(x.currentBucketMinTime)).To(Equal(time.Duration(time.Minute)))
+			x.publish(x.currentBuckets)
+		})
+	})
 
-			// verify the input channels
-			Expect(x.input).NotTo(BeClosed())
-			Expect(x.shutdown).NotTo(BeClosed())
+
+	Describe("pub", func() {
+		It("should publish the expected current and future stats", func(done Done) {
+			const STAT_NAME = "foo"
+			output := make(chan []*stat.Stat)
+			x := NewBucketer(stats, output, shutdown)
+
+			// insert two "current" stats
+			s1 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second)),   Value : 1}
+			s2 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second*2)), Value : 2}
+			x.insert(&s1)
+			x.insert(&s2)
+			
+			// insert two previous stats
+			s3 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second * -2)), Value : 3}
+			s4 := stat.Stat{Name : STAT_NAME, Timestamp : x.currentBucketMinTime.Add(time.Duration(time.Second * -1)), Value : 4}
+			x.insert(&s3)
+			x.insert(&s4)
+			
+			// verify the stats went to the appropriate buckets
+			Expect(x.currentBuckets[STAT_NAME]).To(ConsistOf(&s1, &s2))
+			Expect(x.previousBuckets[STAT_NAME]).To(ConsistOf(&s3, &s4))
+			Expect(x.futureBuckets[STAT_NAME]).To(BeNil())
+
+			// start a goroutine to consume and verify the output
+			go func(bucketed chan []*stat.Stat) {
+				// the "current" bucket is published/received first
+				bucket := <-bucketed
+				Expect(bucket).To(ConsistOf(&s1, &s2))
+				
+				// the "previous" bucket is published/received second
+				bucket = <-bucketed
+				Expect(bucket).To(ConsistOf(&s3, &s4))
+				close(done)
+			}(output)
+
+			x.pub()
 		})
 	})	
 })

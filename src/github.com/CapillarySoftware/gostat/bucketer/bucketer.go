@@ -93,7 +93,6 @@ func (b *Bucketer) publish(buckets bucketMap) {
 	}
 }
 
-
 // insert places the provided stat in the appropriate current, previous, or future bucket.
 // It returns an error if the stat could not be placed in a bucket
 func (b *Bucketer) insert(s *stat.Stat) error {
