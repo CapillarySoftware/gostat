@@ -8,16 +8,8 @@
 # Folders
 _obj
 _test
-bin/
-pkg/
-src/github.com/onsi/
-src/code.google.com/
-src/github.com/gocql/
-src/github.com/golang/
-src/speter.net/
-src/github.com/CapillarySoftware/gostat/gostat
-src/github.com/op/
-src/github.com/cihub/
+
+gostat
 
 # Architecture specific extensions/prefixes
 *.[568vq]
