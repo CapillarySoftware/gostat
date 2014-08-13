@@ -21,7 +21,6 @@ sudo nohup $HOME/cassandra-2.0.8/bin/cassandra
 Export the following environment variables
 
 <pre><code>
-export GOPATH=$HOME/gostat
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 
@@ -49,6 +48,12 @@ Install the following package dependencies
 <pre><code>
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
+
+</code></pre>
+
+If you are using <code>godep</godep>, then just <code>godep restore</code>, otherwise, install the rest of these dependencies:
+
+<pre><code>
 go get github.com/gocql/gocql
 go get github.com/op/go-nanomsg
 go get github.com/cihub/seelog
