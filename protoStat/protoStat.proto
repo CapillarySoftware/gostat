@@ -17,8 +17,10 @@ message protoStat {
 	required string key = 1;
 	optional double value = 2;
 	optional string indexKey = 3;
+	optional bool repeat = 4;
 }
 
 message protoStats {
 	repeated protoStat stats = 1;
+    optional int64 timeNano = 2;
 }

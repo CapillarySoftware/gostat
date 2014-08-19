@@ -48,6 +48,7 @@ type ProtoStat struct {
 	Key              *string  `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
 	Value            *float64 `protobuf:"fixed64,2,opt,name=value" json:"value,omitempty"`
 	IndexKey         *string  `protobuf:"bytes,3,opt,name=indexKey" json:"indexKey,omitempty"`
+	Repeat           *bool    `protobuf:"varint,4,opt,name=repeat" json:"repeat,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
@@ -75,8 +76,16 @@ func (m *ProtoStat) GetIndexKey() string {
 	return ""
 }
 
+func (m *ProtoStat) GetRepeat() bool {
+	if m != nil && m.Repeat != nil {
+		return *m.Repeat
+	}
+	return false
+}
+
 type ProtoStats struct {
 	Stats            []*ProtoStat `protobuf:"bytes,1,rep,name=stats" json:"stats,omitempty"`
+	TimeNano         *int64       `protobuf:"varint,2,opt,name=timeNano" json:"timeNano,omitempty"`
 	XXX_unrecognized []byte       `json:"-"`
 }
 
@@ -88,6 +97,13 @@ func (m *ProtoStats) GetStats() []*ProtoStat {
 		return m.Stats
 	}
 	return nil
+}
+
+func (m *ProtoStats) GetTimeNano() int64 {
+	if m != nil && m.TimeNano != nil {
+		return *m.TimeNano
+	}
+	return 0
 }
 
 func init() {
@@ -177,6 +193,24 @@ func (m *ProtoStat) Unmarshal(data []byte) error {
 			s := string(data[index:postIndex])
 			m.IndexKey = &s
 			index = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Repeat", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Repeat = &b
 		default:
 			var sizeOfWire int
 			for {
@@ -242,6 +276,23 @@ func (m *ProtoStats) Unmarshal(data []byte) error {
 			m.Stats = append(m.Stats, &ProtoStat{})
 			m.Stats[len(m.Stats)-1].Unmarshal(data[index:postIndex])
 			index = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TimeNano", wireType)
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if index >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[index]
+				index++
+				v |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.TimeNano = &v
 		default:
 			var sizeOfWire int
 			for {
@@ -273,6 +324,7 @@ func (this *ProtoStat) String() string {
 		`Key:` + valueToStringProtoStat(this.Key) + `,`,
 		`Value:` + valueToStringProtoStat(this.Value) + `,`,
 		`IndexKey:` + valueToStringProtoStat(this.IndexKey) + `,`,
+		`Repeat:` + valueToStringProtoStat(this.Repeat) + `,`,
 		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -284,6 +336,7 @@ func (this *ProtoStats) String() string {
 	}
 	s := strings.Join([]string{`&ProtoStats{`,
 		`Stats:` + strings.Replace(fmt1.Sprintf("%v", this.Stats), "ProtoStat", "ProtoStat", 1) + `,`,
+		`TimeNano:` + valueToStringProtoStat(this.TimeNano) + `,`,
 		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -311,6 +364,9 @@ func (m *ProtoStat) Size() (n int) {
 		l = len(*m.IndexKey)
 		n += 1 + l + sovProtoStat(uint64(l))
 	}
+	if m.Repeat != nil {
+		n += 2
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -324,6 +380,9 @@ func (m *ProtoStats) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovProtoStat(uint64(l))
 		}
+	}
+	if m.TimeNano != nil {
+		n += 1 + sovProtoStat(uint64(*m.TimeNano))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -359,8 +418,12 @@ func NewPopulatedProtoStat(r randyProtoStat, easy bool) *ProtoStat {
 		v3 := randStringProtoStat(r)
 		this.IndexKey = &v3
 	}
+	if r.Intn(10) != 0 {
+		v4 := bool(r.Intn(2) == 0)
+		this.Repeat = &v4
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedProtoStat(r, 4)
+		this.XXX_unrecognized = randUnrecognizedProtoStat(r, 5)
 	}
 	return this
 }
@@ -368,14 +431,21 @@ func NewPopulatedProtoStat(r randyProtoStat, easy bool) *ProtoStat {
 func NewPopulatedProtoStats(r randyProtoStat, easy bool) *ProtoStats {
 	this := &ProtoStats{}
 	if r.Intn(10) != 0 {
-		v4 := r.Intn(10)
-		this.Stats = make([]*ProtoStat, v4)
-		for i := 0; i < v4; i++ {
+		v5 := r.Intn(10)
+		this.Stats = make([]*ProtoStat, v5)
+		for i := 0; i < v5; i++ {
 			this.Stats[i] = NewPopulatedProtoStat(r, easy)
 		}
 	}
+	if r.Intn(10) != 0 {
+		v6 := r.Int63()
+		if r.Intn(2) == 0 {
+			v6 *= -1
+		}
+		this.TimeNano = &v6
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedProtoStat(r, 2)
+		this.XXX_unrecognized = randUnrecognizedProtoStat(r, 3)
 	}
 	return this
 }
@@ -397,9 +467,9 @@ func randUTF8RuneProtoStat(r randyProtoStat) rune {
 	return res
 }
 func randStringProtoStat(r randyProtoStat) string {
-	v5 := r.Intn(100)
-	tmps := make([]rune, v5)
-	for i := 0; i < v5; i++ {
+	v7 := r.Intn(100)
+	tmps := make([]rune, v7)
+	for i := 0; i < v7; i++ {
 		tmps[i] = randUTF8RuneProtoStat(r)
 	}
 	return string(tmps)
@@ -421,11 +491,11 @@ func randFieldProtoStat(data []byte, r randyProtoStat, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateProtoStat(data, uint64(key))
-		v6 := r.Int63()
+		v8 := r.Int63()
 		if r.Intn(2) == 0 {
-			v6 *= -1
+			v8 *= -1
 		}
-		data = encodeVarintPopulateProtoStat(data, uint64(v6))
+		data = encodeVarintPopulateProtoStat(data, uint64(v8))
 	case 1:
 		data = encodeVarintPopulateProtoStat(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -482,6 +552,16 @@ func (m *ProtoStat) MarshalTo(data []byte) (n int, err error) {
 		i = encodeVarintProtoStat(data, i, uint64(len(*m.IndexKey)))
 		i += copy(data[i:], *m.IndexKey)
 	}
+	if m.Repeat != nil {
+		data[i] = 0x20
+		i++
+		if *m.Repeat {
+			data[i] = 1
+		} else {
+			data[i] = 0
+		}
+		i++
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -513,6 +593,11 @@ func (m *ProtoStats) MarshalTo(data []byte) (n int, err error) {
 			}
 			i += n
 		}
+	}
+	if m.TimeNano != nil {
+		data[i] = 0x10
+		i++
+		i = encodeVarintProtoStat(data, i, uint64(*m.TimeNano))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -550,14 +635,14 @@ func (this *ProtoStat) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protoStat.ProtoStat{` + `Key:` + valueToGoStringProtoStat(this.Key, "string"), `Value:` + valueToGoStringProtoStat(this.Value, "float64"), `IndexKey:` + valueToGoStringProtoStat(this.IndexKey, "string"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&protoStat.ProtoStat{` + `Key:` + valueToGoStringProtoStat(this.Key, "string"), `Value:` + valueToGoStringProtoStat(this.Value, "float64"), `IndexKey:` + valueToGoStringProtoStat(this.IndexKey, "string"), `Repeat:` + valueToGoStringProtoStat(this.Repeat, "bool"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ProtoStats) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&protoStat.ProtoStats{` + `Stats:` + fmt2.Sprintf("%#v", this.Stats), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&protoStat.ProtoStats{` + `Stats:` + fmt2.Sprintf("%#v", this.Stats), `TimeNano:` + valueToGoStringProtoStat(this.TimeNano, "int64"), `XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringProtoStat(v interface{}, typ string) string {
@@ -632,6 +717,15 @@ func (this *ProtoStat) VerboseEqual(that interface{}) error {
 	} else if that1.IndexKey != nil {
 		return fmt3.Errorf("IndexKey this(%v) Not Equal that(%v)", this.IndexKey, that1.IndexKey)
 	}
+	if this.Repeat != nil && that1.Repeat != nil {
+		if *this.Repeat != *that1.Repeat {
+			return fmt3.Errorf("Repeat this(%v) Not Equal that(%v)", *this.Repeat, *that1.Repeat)
+		}
+	} else if this.Repeat != nil {
+		return fmt3.Errorf("this.Repeat == nil && that.Repeat != nil")
+	} else if that1.Repeat != nil {
+		return fmt3.Errorf("Repeat this(%v) Not Equal that(%v)", this.Repeat, that1.Repeat)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
@@ -684,6 +778,15 @@ func (this *ProtoStat) Equal(that interface{}) bool {
 	} else if that1.IndexKey != nil {
 		return false
 	}
+	if this.Repeat != nil && that1.Repeat != nil {
+		if *this.Repeat != *that1.Repeat {
+			return false
+		}
+	} else if this.Repeat != nil {
+		return false
+	} else if that1.Repeat != nil {
+		return false
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
@@ -717,6 +820,15 @@ func (this *ProtoStats) VerboseEqual(that interface{}) error {
 			return fmt3.Errorf("Stats this[%v](%v) Not Equal that[%v](%v)", i, this.Stats[i], i, that1.Stats[i])
 		}
 	}
+	if this.TimeNano != nil && that1.TimeNano != nil {
+		if *this.TimeNano != *that1.TimeNano {
+			return fmt3.Errorf("TimeNano this(%v) Not Equal that(%v)", *this.TimeNano, *that1.TimeNano)
+		}
+	} else if this.TimeNano != nil {
+		return fmt3.Errorf("this.TimeNano == nil && that.TimeNano != nil")
+	} else if that1.TimeNano != nil {
+		return fmt3.Errorf("TimeNano this(%v) Not Equal that(%v)", this.TimeNano, that1.TimeNano)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
@@ -749,6 +861,15 @@ func (this *ProtoStats) Equal(that interface{}) bool {
 		if !this.Stats[i].Equal(that1.Stats[i]) {
 			return false
 		}
+	}
+	if this.TimeNano != nil && that1.TimeNano != nil {
+		if *this.TimeNano != *that1.TimeNano {
+			return false
+		}
+	} else if this.TimeNano != nil {
+		return false
+	} else if that1.TimeNano != nil {
+		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
