@@ -18,10 +18,6 @@ import (
 func main() {
 	go socketApi.SocketApiServer()
 
-	for {
-		time.Sleep(1000)
-	}
-
 	stats := make(chan *stat.Stat)           // stats received from producers
 	rawStats := make(chan *stat.Stat)        // raw stats to be archived
 	bucketedStats := make(chan []*stat.Stat) // raw bucketed (non-aggregated) stats are output here
