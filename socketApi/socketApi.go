@@ -19,9 +19,10 @@ type rawStat struct {
 }
 
 type rawStatsRequest struct {
-	Name      string  `json:"name"`
-	StartDate float64 `json:"startDate"`
-	EndDate   float64 `json:"endDate"`
+	Tracker   string `json:"tracker"`
+	Name      string `json:"name"`
+	StartDate int64  `json:"startDate"`
+	EndDate   int64  `json:"endDate"`
 }
 
 func SocketApiServer() {
@@ -31,22 +32,18 @@ func SocketApiServer() {
 	}
 
 	server.On("connection", func(so socketio.Socket) {
-		log.Debug("on connection")
-		so.Join("chat")
+		log.Debug("on connection (rawStats)")
 		so.On("rawStats", func(msg string) {
 
-			log.Debug("got chat message: ", msg)
+			log.Debug("rawStats request: ", msg)
 			so.Emit("rawStats", "reply: "+msg)
 
-			const longForm = "2006-01-02 15:04:05-0700"
-			startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
-			endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
-			rawStats, _ := repo.GetRawStats("stat8", startDate, endDate)
+			rawStats := runRawLogQuery(msg)
 
 			so.Emit("rawStats", toJson(rawStats))
 		})
 		so.On("disconnection", func() {
-			log.Debug("on disconnect")
+			log.Debug("on disconnect (rawStats)")
 		})
 	})
 	server.On("error", func(so socketio.Socket, err error) {
@@ -59,8 +56,13 @@ func SocketApiServer() {
 	log.Error(http.ListenAndServe(":5000", nil))
 }
 
-func runRawLogQuery(req string) {
+func runRawLogQuery(req string) (rawStats []stat.Stat) {
+	const longForm = "2006-01-02 15:04:05-0700"
+	startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
+	endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
+	rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
 
+	return rawStats
 }
 
 func toJson(stats []stat.Stat) string {
