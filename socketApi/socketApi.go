@@ -18,6 +18,12 @@ type rawStat struct {
 	Value float64 `json:"value"`
 }
 
+type rawStatsRequest struct {
+	Name      string  `json:"name"`
+	StartDate float64 `json:"startDate"`
+	EndDate   float64 `json:"endDate"`
+}
+
 func SocketApiServer() {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -30,7 +36,7 @@ func SocketApiServer() {
 		so.On("rawStats", func(msg string) {
 
 			log.Debug("got chat message: ", msg)
-			so.Emit("chat message", "reply: "+msg)
+			so.Emit("rawStats", "reply: "+msg)
 
 			const longForm = "2006-01-02 15:04:05-0700"
 			startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
