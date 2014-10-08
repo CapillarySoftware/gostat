@@ -59,10 +59,24 @@ func SocketApiServer() {
 func runRawLogQuery(req string) (rawStats []stat.Stat, err error) {
 	const longForm = "2006-01-02 15:04:05-0700"
 	startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
-	endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
+	endDate, _ := time.Parse(longForm, "2016-09-30 21:50:15-0600")
 	rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
 
 	return rawStats, nil
+	/*
+		var request rawStatsRequest
+		err = json.Unmarshal([]byte(req), &request)
+		if err != nil {
+			const longForm = "2006-01-02 15:04:05-0700"
+			startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
+			endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
+			rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
+
+			return rawStats, nil
+		} else {
+			return nil, err
+		}
+	*/
 }
 
 func toJson(stats []stat.Stat) string {
