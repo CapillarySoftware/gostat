@@ -36,9 +36,9 @@ func SocketApiServer() {
 		so.On("rawStats", func(msg string) {
 
 			log.Debug("rawStats request: ", msg)
-			so.Emit("rawStats", "reply: "+msg)
+			so.Emit("echo", "reply: "+msg)
 
-			rawStats := runRawLogQuery(msg)
+			rawStats, _ := runRawLogQuery(msg)
 
 			so.Emit("rawStats", toJson(rawStats))
 		})
@@ -56,13 +56,13 @@ func SocketApiServer() {
 	log.Error(http.ListenAndServe(":5000", nil))
 }
 
-func runRawLogQuery(req string) (rawStats []stat.Stat) {
+func runRawLogQuery(req string) (rawStats []stat.Stat, err error) {
 	const longForm = "2006-01-02 15:04:05-0700"
 	startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
 	endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
 	rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
 
-	return rawStats
+	return rawStats, nil
 }
 
 func toJson(stats []stat.Stat) string {
