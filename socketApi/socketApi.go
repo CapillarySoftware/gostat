@@ -12,10 +12,10 @@ import (
 
 type rawStat struct {
 	// UNIX EPOCH Timestamp specifies the moment in time the statistic is applicable to
-	Ts int64
+	Ts int64 `json:"ts"`
 
 	// Value is the numeric representation of the statistic
-	Value float64
+	Value float64 `json:"value"`
 }
 
 func SocketApiServer() {
@@ -27,7 +27,7 @@ func SocketApiServer() {
 	server.On("connection", func(so socketio.Socket) {
 		log.Debug("on connection")
 		so.Join("chat")
-		so.On("chat message", func(msg string) {
+		so.On("rawStats", func(msg string) {
 
 			log.Debug("got chat message: ", msg)
 			so.Emit("chat message", "reply: "+msg)
@@ -37,7 +37,7 @@ func SocketApiServer() {
 			endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
 			rawStats, _ := repo.GetRawStats("stat8", startDate, endDate)
 
-			so.Emit("chat message", toJson(rawStats))
+			so.Emit("rawStats", toJson(rawStats))
 		})
 		so.On("disconnection", func() {
 			log.Debug("on disconnect")
@@ -51,6 +51,10 @@ func SocketApiServer() {
 	http.Handle("/", http.FileServer(http.Dir("./asset")))
 	log.Debug("socket.io API serving at localhost:5000...")
 	log.Error(http.ListenAndServe(":5000", nil))
+}
+
+func runRawLogQuery(req string) {
+
 }
 
 func toJson(stats []stat.Stat) string {
