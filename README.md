@@ -39,7 +39,6 @@ Install Protocol Buffers (OS X)
 
 <pre><code>
 brew install protobuf
-
 </code></pre>
 
 
@@ -57,9 +56,7 @@ If you are using <code>godep</godep>, then just <code>godep restore</code>, othe
 go get github.com/gocql/gocql
 go get github.com/op/go-nanomsg
 go get github.com/cihub/seelog
-
 </code></pre>
-
 
 Rebuild gogoprotobuffer messages
 
@@ -67,3 +64,12 @@ Rebuild gogoprotobuffer messages
 go get -u code.google.com/p/gogoprotobuf/{proto,protoc-gen-gogo,gogoproto}
 protoc --gogo_out=. -I=.:code.google.com/p/gogoprotobuf/protobuf -I=$GOPATH/src/ -I=$GOPATH/src/code.google.com/p/gogoprotobuf/protobuf *.proto
 </code></pre>
+
+### Create the Cassandra Data Store ###
+
+from the project root
+```
+cd cassandra
+./cassandra.sh
+```
+
