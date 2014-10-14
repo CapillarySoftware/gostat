@@ -49,9 +49,34 @@ func (s *StatRepo) insertRawStat(stat *stat.Stat) {
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
-	// insert a tweet
 	if err := session.Query(`INSERT INTO raw_stats (name, ts, value) VALUES (?, ?, ?)`,
 		stat.Name, stat.Timestamp, stat.Value).Exec(); err != nil {
 		log.Error(err)
 	}
+}
+
+func GetRawStats(name string, start, end time.Time) ([]stat.Stat, error) {
+	rawStats := make([]stat.Stat, 0)
+
+	// connect to the cluster
+	cluster := gocql.NewCluster("localhost")
+	cluster.Keyspace = "gostat"
+	cluster.Consistency = gocql.Quorum
+	session, _ := cluster.CreateSession()
+	defer session.Close()
+
+	iter := session.Query(`SELECT ts, value FROM raw_stats WHERE name = ? AND ts >= ? AND ts <= ?`, name, start, end).Iter()
+	var ts time.Time
+	var value float64
+	for iter.Scan(&ts, &value) {
+		stat := stat.Stat{Name: name, Timestamp: ts, Value: value}
+		rawStats = append(rawStats, stat)
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Error(err)
+		return make([]stat.Stat, 0), err
+	}
+
+	return rawStats, nil
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/CapillarySoftware/gostat/aggregator"
 	"github.com/CapillarySoftware/gostat/bucketer"
 	"github.com/CapillarySoftware/gostat/repo"
+	"github.com/CapillarySoftware/gostat/socketApi"
 	"github.com/CapillarySoftware/gostat/stat"
 	log "github.com/cihub/seelog"
 	nano "github.com/op/go-nanomsg"
@@ -15,6 +16,8 @@ import (
 )
 
 func main() {
+	go socketApi.SocketApiServer()
+
 	stats := make(chan *stat.Stat)           // stats received from producers
 	rawStats := make(chan *stat.Stat)        // raw stats to be archived
 	bucketedStats := make(chan []*stat.Stat) // raw bucketed (non-aggregated) stats are output here
