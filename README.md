@@ -56,6 +56,7 @@ If you are using <code>godep</godep>, then just <code>godep restore</code>, othe
 go get github.com/gocql/gocql
 go get github.com/op/go-nanomsg
 go get github.com/cihub/seelog
+go get github.com/googollee/go-socket.io
 </code></pre>
 
 Rebuild gogoprotobuffer messages
