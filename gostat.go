@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/CapillarySoftware/gostat/aggregator"
 	"github.com/CapillarySoftware/gostat/bucketer"
@@ -16,6 +17,9 @@ import (
 )
 
 func main() {
+	simulateData := flag.Bool("sim", false, "randomly generate and insert test data")
+	flag.Parse()
+
 	go socketApi.SocketApiServer()
 
 	stats := make(chan *stat.Stat)           // stats received from producers
@@ -61,10 +65,13 @@ func main() {
 	for true {
 		<-time.After(time.Second * time.Duration(rand.Intn(3))) // sleep 0-3 seconds
 
-		// create a stat randomly named "stat1 ... stat10" with a random value between 1-100
-		stat := stat.Stat{Name: fmt.Sprintf("stat%v", (rand.Intn(9) + 1)), Timestamp: time.Now().UTC(), Value: float64(rand.Intn(99) + 1)}
-		stats <- &stat    // send it to the Bucketer
-		rawStats <- &stat // for archiving
+		if *simulateData {
+			// create a stat randomly named "stat1 ... stat10" with a random value between 1-100
+			stat := stat.Stat{Name: fmt.Sprintf("stat%v", (rand.Intn(9) + 1)), Timestamp: time.Now().UTC(), Value: float64(rand.Intn(99) + 1)}
+			log.Debug("Generated simulated stat: ", stat)
+			stats <- &stat    // send it to the Bucketer
+			rawStats <- &stat // for archiving
+		}
 	}
 }
 
@@ -110,9 +117,10 @@ func bindSocketListener(stats chan<- *stat.Stat, shutdown <-chan bool) {
 
 	for !done {
 		msg, err = socket.Recv(0) //blocking
-		if nil != err {
+		if nil != err && err.Error() != "resource temporarily unavailable" {
 			log.Error(err)
 		}
+
 		if nil != msg {
 			// TODO: new up a Stat and send it on the stats channel
 			log.Debug("Received message: ", msg)
