@@ -7,6 +7,7 @@ import (
 	log "github.com/cihub/seelog"
 	"github.com/googollee/go-socket.io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,28 @@ type rawStatsRequest struct {
 	EndDate   int64  `json:"endDate"`
 }
 
+type lastNRawStatsRequest struct {
+	Tracker string `json:"tracker"`
+	Name    string `json:"name"`
+	Last    int    `json:"last"`
+}
+
+func handleRawStatsReq(reqType, msg string, so socketio.Socket) {
+	log.Debug(reqType, ": ", msg)
+	so.Emit("echo", msg)
+
+	rawStats, err := runRawLogQuery(reqType, msg)
+	if err != nil {
+		log.Error("error running ", reqType, " query: ", err)
+	}
+
+	log.Debug(rawStats)
+	resType := strings.TrimSuffix(reqType, "Req") + "Res"
+	if so != nil {
+		so.Emit(resType, toJson(rawStats))
+	}
+}
+
 func SocketApiServer() {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -32,15 +55,12 @@ func SocketApiServer() {
 	}
 
 	server.On("connection", func(so socketio.Socket) {
-		log.Debug("on connection (rawStats)")
-		so.On("rawStats", func(msg string) {
-
-			log.Debug("rawStats request: ", msg)
-			so.Emit("echo", "reply: "+msg)
-
-			rawStats, _ := runRawLogQuery(msg)
-
-			so.Emit("rawStats", toJson(rawStats))
+		log.Debug("on connection (socketApi)")
+		so.On("rawStatsReq", func(msg string) {
+			handleRawStatsReq("rawStatsReq", msg, so)
+		})
+		so.On("lastNRawStatsReq", func(msg string) {
+			handleRawStatsReq("lastNRawStatsReq", msg, so)
 		})
 		so.On("disconnection", func() {
 			log.Debug("on disconnect (rawStats)")
@@ -56,21 +76,48 @@ func SocketApiServer() {
 	log.Error(http.ListenAndServe(":5000", nil))
 }
 
-func runRawLogQuery(req string) (rawStats []stat.Stat, err error) {
-	var request rawStatsRequest
+func runRawLogQuery(reqType, req string) (rawStats []stat.Stat, err error) {
+	switch reqType {
+	case "rawStatsReq":
+		request, err := unmarshalRawStatsReq(req)
+		if err != nil {
+			return nil, err
+		}
+		log.Debugf("parsed rawStatsReq request: %#v (start date: %s, end date: %s)", request, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0))
+		if rawStats, err = repo.GetRawStats(request.Name, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0)); err != nil {
+			log.Error("repo error retrieving raw stats for rawStatsReq request (", req, "): ", err)
+			return nil, err
+		}
+	case "lastNRawStatsReq":
+		request, err := unmarshalLastNRawStatsReq(req)
+		if err != nil {
+			return nil, err
+		}
 
+		log.Debugf("parsed lastNRawStatsReq request: %#v", request)
+		if rawStats, err = repo.GetLastNRawStats(request.Name, request.Last); err != nil {
+			log.Error("repo error retrieving last n raw stats for lastNRawStatsReq request (", req, "): ", err)
+			return nil, err
+		}
+	}
+
+	return rawStats, nil
+}
+
+func unmarshalRawStatsReq(req string) (request *rawStatsRequest, err error) {
 	if err = json.Unmarshal([]byte(req), &request); err != nil {
 		log.Error("error parsing raw stats request (", req, "): ", err)
 		return nil, err
 	}
+	return request, nil
+}
 
-	log.Debugf("parsed request: %#v (start date: %s, end date: %s)", request, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0))
-	if rawStats, err = repo.GetRawStats(request.Name, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0)); err != nil {
-		log.Error("repo error retrieving raw stats for request (", req, "): ", err)
+func unmarshalLastNRawStatsReq(req string) (request *lastNRawStatsRequest, err error) {
+	if err = json.Unmarshal([]byte(req), &request); err != nil {
+		log.Error("error parsing last n raw stats request (", req, "): ", err)
 		return nil, err
 	}
-
-	return rawStats, nil
+	return request, nil
 }
 
 func toJson(stats []stat.Stat) string {

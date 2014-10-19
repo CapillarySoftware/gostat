@@ -16,27 +16,61 @@
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+      <input id="m" autocomplete="off" value="stat8"></input><button>Send</button>
     </form>
     <script src="/socket.io.js"></script>
     <script src="/jquery-1.11.1.js"></script>
     <script>
-      var request = {
-        tracker   : 'abcde',
-        name      : null,
-        startDate : 1412134560,
-        endDate   : 1451606400
-      };
+      var parseInput = function() {
+        var request = { name : null, last : null };
+        var input = $('#m').val();
+        var regex = /^\s*(\S+)\s*(\d+)?/g;
+        var match = regex.exec(input);
+        if (match && match.length >= 3) {
+          request.name = match[1];
+          if (match[2] != null) {
+            request.last = match[2]
+          }
+        }
+
+        return request
+      }
 
       var socket = io();
       $('form').submit(function(){
-        request.name = $('#m').val() || 'stat8';
-        console.log('sending', request);
-        socket.emit('rawStats', JSON.stringify(request));
-        $('#m').val('');
+        var input = parseInput()
+
+        if (input.name != null && input.last == null) {
+          var request = {
+            tracker   : 'abcde',
+            name      : input.name,
+            startDate : 1412134560,
+            endDate   : 1451606400
+          };
+          console.log('sending', request);
+          socket.emit('rawStatsReq', JSON.stringify(request));
+          $('#m').val('');
+        }
+        else if (input.name != null && input.last != null) {
+          var request = {
+            tracker   : 'abcde',
+            name      : input.name,
+            last      : Number(input.last)
+          };
+          console.log('sending', request);
+          socket.emit('lastNRawStatsReq', JSON.stringify(request));
+          $('#m').val('');
+        }
+        else {
+          alert("Specify a stat name and an optional last n records")
+        }
+
         return false;
       });
-      socket.on('rawStats', function(msg){
+      socket.on('rawStatsRes', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
+      socket.on('lastNRawStatsRes', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
       socket.on('echo', function(msg){
