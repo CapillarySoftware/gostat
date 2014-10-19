@@ -41,28 +41,39 @@ func (s *StatRepo) Run() {
 	log.Info("StatRepo InsertRawStats() exiting ", time.Now())
 }
 
-func (s *StatRepo) insertRawStat(stat *stat.Stat) {
-	// connect to the cluster
+func createSession() (session *gocql.Session, err error) {
 	cluster := gocql.NewCluster("localhost")
 	cluster.Keyspace = "gostat"
 	cluster.Consistency = gocql.Quorum
-	session, _ := cluster.CreateSession()
+
+	return cluster.CreateSession()
+}
+
+func (s *StatRepo) insertRawStat(stat *stat.Stat) {
+	var session *gocql.Session
+	var err error
+
+	if session, err = createSession(); err != nil {
+		log.Error("error connecting to Cassandra to insert raw stat: ", err)
+		return
+	}
 	defer session.Close()
 
 	if err := session.Query(`INSERT INTO raw_stats (name, ts, value) VALUES (?, ?, ?)`,
 		stat.Name, stat.Timestamp, stat.Value).Exec(); err != nil {
-		log.Error(err)
+		log.Error("error inserting raw stat: ", err)
 	}
 }
 
 func GetRawStats(name string, start, end time.Time) ([]stat.Stat, error) {
+	var session *gocql.Session
+	var err error
 	rawStats := make([]stat.Stat, 0)
 
-	// connect to the cluster
-	cluster := gocql.NewCluster("localhost")
-	cluster.Keyspace = "gostat"
-	cluster.Consistency = gocql.Quorum
-	session, _ := cluster.CreateSession()
+	if session, err = createSession(); err != nil {
+		log.Error("failed to connect to Cassandra to query raw stats: ", err)
+		return make([]stat.Stat, 0), err
+	}
 	defer session.Close()
 
 	iter := session.Query(`SELECT ts, value FROM raw_stats WHERE name = ? AND ts >= ? AND ts <= ?`, name, start, end).Iter()
@@ -74,7 +85,7 @@ func GetRawStats(name string, start, end time.Time) ([]stat.Stat, error) {
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Error(err)
+		log.Error("error transforming raw stats query results: ", err)
 		return make([]stat.Stat, 0), err
 	}
 

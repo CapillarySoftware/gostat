@@ -57,26 +57,20 @@ func SocketApiServer() {
 }
 
 func runRawLogQuery(req string) (rawStats []stat.Stat, err error) {
-	const longForm = "2006-01-02 15:04:05-0700"
-	startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
-	endDate, _ := time.Parse(longForm, "2016-09-30 21:50:15-0600")
-	rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
+	var request rawStatsRequest
+
+	if err = json.Unmarshal([]byte(req), &request); err != nil {
+		log.Error("error parsing raw stats request (", req, "): ", err)
+		return nil, err
+	}
+
+	log.Debugf("parsed request: %#v (start date: %s, end date: %s)", request, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0))
+	if rawStats, err = repo.GetRawStats(request.Name, time.Unix(request.StartDate, 0), time.Unix(request.EndDate, 0)); err != nil {
+		log.Error("repo error retrieving raw stats for request (", req, "): ", err)
+		return nil, err
+	}
 
 	return rawStats, nil
-	/*
-		var request rawStatsRequest
-		err = json.Unmarshal([]byte(req), &request)
-		if err != nil {
-			const longForm = "2006-01-02 15:04:05-0700"
-			startDate, _ := time.Parse(longForm, "2014-09-30 20:50:18-0600")
-			endDate, _ := time.Parse(longForm, "2014-09-30 21:50:15-0600")
-			rawStats, _ = repo.GetRawStats("stat8", startDate, endDate)
-
-			return rawStats, nil
-		} else {
-			return nil, err
-		}
-	*/
 }
 
 func toJson(stats []stat.Stat) string {
